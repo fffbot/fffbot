@@ -9,5 +9,6 @@ python_version = "3.5"
 [packages]
 requests = "*"
 praw = "*"
+"html2text" = "*"
 
 [dev-packages]
