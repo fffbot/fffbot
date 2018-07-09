@@ -23,7 +23,9 @@ def process_submission(submission):
 
         markdown = to_markdown(clipped)
         logger.info('Output markdown:\n' + markdown + '\nLength: ' + str(len(markdown)))
-        comment = submission.reply(markdown[:9990] + ' (...)')
+
+        reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
+        comment = submission.reply(reply)
         logger.info('Added comment: ' + comment.id)
 
 
