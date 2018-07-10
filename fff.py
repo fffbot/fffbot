@@ -88,7 +88,7 @@ def clip(html):
 
 
 def to_markdown(html):
-    md = html2text.html2text(html)
+    md = html2text.html2text(html, bodywidth=1000)
     images_to_urls = re.sub(r'!\[\]\((.+)\)', r'(\g<1>)', md)
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
