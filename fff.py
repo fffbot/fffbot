@@ -1,20 +1,49 @@
+import logging
+import re
+import threading
+import time
+
+import html2text
 import praw
 import requests
-import html2text
-import re
-import logging
-
 
 logger = logging.getLogger(__name__)
+
+
+def main():
+    while True:
+        try:
+            listen_for_submissions()
+        except Exception:
+            logger.exception("Caught exception while listening for submissions")
+            logger.error("Sleeping 5 minutes to cool down")
+            time.sleep(5 * 60)
+            logger.error("Done sleeping, going to start listening again")
+
+
+def listen_for_submissions():
+    reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; pyfff; PRAW)')
+    subs = reddit.subreddit('bottesting+factorio')
+
+    logger.info("Starting to listen for submissions")
+    logger.info("Skipping first 100 submissions")
+    i = 1
+    # TODO: use skip_existing in PRAW 6
+    for submission in subs.stream.submissions():
+        if i > 100:
+            process_submission(submission)
+        else:
+            logger.info("Skipping submission #" + str(i) + ": " + submission.id + " (" + submission.title + ")")
+            i = i + 1
 
 
 def process_submission(submission):
     logger.info("Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
     if 'factorio.com/blog/post/fff' in submission.url:
-        logger.info("Submission identified as FFF post")
+        logger.info("Submission identified as FFF post, fetching data")
 
         html = requests.get(submission.url).text
-        logger.info("Fetched data: " + str(len(html)))
+        logger.info("Fetched data (" + str(len(html)) + ") bytes")
 
         clipped = clip(html)
         if clipped is None:
@@ -22,11 +51,16 @@ def process_submission(submission):
             return
 
         markdown = to_markdown(clipped)
-        logger.info('Output markdown:\n' + markdown + '\nLength: ' + str(len(markdown)))
+        logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
 
         reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
-        comment = submission.reply(reply)
-        logger.info('Added comment: ' + comment.id)
+        if len(markdown) > 9980:
+            logger.warning("Markdown text was longer than 9980 characters, abbreviated to 9980 characters")
+
+        thread = threading.Thread(target=sleep_and_post, args=(submission, reply))
+        logger.info("Starting thread to sleep and post comment")
+        thread.start()
+        logger.info("Thread started")
 
 
 def clip(html):
@@ -55,23 +89,14 @@ def to_markdown(html):
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
 
-def do_eet():
-    reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; pyfff; PRAW)')
-
-    subs = reddit.subreddit('bottesting+factorio')
-
-    logger.info("Starting to listen for submissions")
-    logger.info("Skipping first 100 submissions")
-    i = 1
-    # TODO: use skip_existing in PRAW 6
-    for submission in subs.stream.submissions():
-        if i > 100:
-            process_submission(submission)
-        else:
-            logger.info("Skipping submission #" + str(i) + ": " + submission.id + " (" + submission.title + ")")
-            i = i + 1
+def sleep_and_post(submission, msg):
+    logger.info("Sleeping for 120 seconds")
+    time.sleep(120)
+    logger.info("Done sleeping, adding comment to " + submission.id + ": " + msg)
+    comment = submission.reply(msg)
+    logger.info('Added comment: ' + comment.id)
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)8s [%(asctime)s] [%(thread)d] %(name)s: %(message)s', level=logging.INFO)
-    do_eet()
+    main()
