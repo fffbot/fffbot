@@ -4,10 +4,14 @@ import threading
 import time
 
 import html2text
+import os
 import praw
 import requests
 
+
 logger = logging.getLogger(__name__)
+comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
+cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5*60))
 
 
 def main():
@@ -16,8 +20,8 @@ def main():
             listen_for_submissions()
         except Exception:
             logger.exception("Caught exception while listening for submissions")
-            logger.error("Sleeping 5 minutes to cool down")
-            time.sleep(5 * 60)
+            logger.error("Sleeping " + str(cooldown_time) + "s to cool down")
+            time.sleep(cooldown_time)
             logger.error("Done sleeping, going to start listening again")
 
 
@@ -90,8 +94,8 @@ def to_markdown(html):
 
 
 def sleep_and_post(submission, msg):
-    logger.info("Sleeping for 120 seconds")
-    time.sleep(120)
+    logger.info("Sleeping for " + str(comment_delay) + "s")
+    time.sleep(comment_delay)
     logger.info("Done sleeping, adding comment to " + submission.id + ": " + msg)
     comment = submission.reply(msg)
     logger.info('Added comment: ' + comment.id)
