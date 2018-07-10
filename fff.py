@@ -44,25 +44,9 @@ def listen_for_submissions():
 def process_submission(submission):
     logger.info("Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
     if 'factorio.com/blog/post/fff' in submission.url:
-        logger.info("Submission identified as FFF post, fetching data")
-
-        html = requests.get(submission.url).text
-        logger.info("Fetched data (" + str(len(html)) + ") bytes")
-
-        clipped = clip(html)
-        if clipped is None:
-            logger.error("Unable to clip html data: " + html)
-            return
-
-        markdown = to_markdown(clipped)
-        logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
-
-        reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
-        if len(markdown) > 9980:
-            logger.warning("Markdown text was longer than 9980 characters, abbreviated to 9980 characters")
-
-        thread = threading.Thread(target=sleep_and_post, args=(submission, reply))
-        logger.info("Starting thread to sleep and post comment")
+        logger.info("Submission identified as FFF post, starting thread to sleep and process")
+        thread = threading.Thread(target=sleep_and_process, args=(submission, ))
+        thread.daemon = True
         thread.start()
         logger.info("Thread started")
 
@@ -93,11 +77,28 @@ def to_markdown(html):
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
 
-def sleep_and_post(submission, msg):
+def sleep_and_process(submission):
     logger.info("Sleeping for " + str(comment_delay) + "s")
     time.sleep(comment_delay)
-    logger.info("Done sleeping, adding comment to " + submission.id + ": " + msg)
-    comment = submission.reply(msg)
+
+    logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
+    html = requests.get(submission.url).text
+    logger.info("Fetched data (" + str(len(html)) + ") bytes")
+
+    clipped = clip(html)
+    if clipped is None:
+        logger.error("Unable to clip html data: " + html)
+        return
+
+    markdown = to_markdown(clipped)
+    logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
+
+    reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
+    if len(markdown) > 9980:
+        logger.warning("Markdown text was longer than 9980 characters, abbreviated to 9980 characters")
+
+    logger.info("Adding comment to " + submission.id + ": " + reply)
+    comment = submission.reply(reply)
     logger.info('Added comment: ' + comment.id)
 
 
