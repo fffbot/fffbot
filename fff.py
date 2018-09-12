@@ -12,6 +12,7 @@ import requests
 logger = logging.getLogger(__name__)
 comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
 cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5*60))
+subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
 
 
 def main():
@@ -27,7 +28,7 @@ def main():
 
 def listen_for_submissions():
     reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; pyfff; PRAW)')
-    subs = reddit.subreddit('bottesting+factorio')
+    subs = reddit.subreddit(subreddits)
 
     logger.info("Starting to listen for submissions")
     logger.info("Skipping first 100 submissions")
