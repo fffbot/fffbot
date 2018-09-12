@@ -126,6 +126,8 @@ We are currently using approximately 40% of the available space, so there is a r
     </a>
     </p>
     
+    <img src="https://i.imgur.com/1xRAbt2.jpg">
+    
     <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom:20px;">
     <a href="https://eu2.factorio.com/assets/img/blog/fff-243-office-picture-3.jpg">
     <img style="vertical-align: top;width: 900px"

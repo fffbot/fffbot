@@ -97,9 +97,14 @@ def upload_to_imgur(url):
     return r.json()['data']['link']
 
 
+def filter_factorio_com(urls):
+    for url in urls:
+        if "factorio.com" in url: yield url
+
+
 def find_images(html):
     urls = re.findall(r'<img.+?src="(.+?)".+?>', html, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
-    return set(urls)
+    return set(filter_factorio_com(urls))
 
 
 def upload_all_to_imgur(urls):
