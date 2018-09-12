@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
 cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5*60))
 subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
+imgur_auth_token = os.getenv('IMGUR_AUTH')
 
 
 def main():
@@ -78,6 +79,56 @@ def to_markdown(html):
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
 
+def upload_to_imgur(url):
+    if imgur_auth_token is None:
+        logger.warning('No Imgur auth, not rehosting ' + url)
+        return url
+
+    logger.info('Uploading image to Imgur: ' + url)
+    data = {'image': url, 'type': 'URL'}
+    headers = {'Authorization': 'Bearer ' + imgur_auth_token}
+
+    r = requests.post('https://api.imgur.com/3/image', data=data, headers=headers)
+    logger.info('Imgur response ' + str(r.status_code) + '; body: ' + r.text)
+
+    if r.status_code != 200:
+        raise Exception('Non-OK response from Imgur')
+
+    return r.json()['data']['link']
+
+
+def find_images(html):
+    urls = re.findall(r'<img.+?src="(.+?)".+?>', html, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    return set(urls)
+
+
+def upload_all_to_imgur(urls):
+    try:
+        r = {}
+        for url in urls:
+            imgurl = upload_to_imgur(url)
+            r[url] = imgurl
+        return r
+    except Exception:
+        logger.exception("Caught exception uploading to imgur, using original images")
+        r = {}
+        for url in urls:
+            r[url] = url
+        return r
+
+
+def replace_images(html, images):
+    for key, value in images.items():
+        html = html.replace(key, value)
+    return html
+
+
+def rehost_all_images(html):
+    images = find_images(html)
+    rehosted = upload_all_to_imgur(images)
+    return replace_images(html, rehosted)
+
+
 def sleep_and_process(submission):
     logger.info("Sleeping for " + str(comment_delay) + "s")
     time.sleep(comment_delay)
@@ -91,7 +142,9 @@ def sleep_and_process(submission):
         logger.error("Unable to clip html data: " + html)
         return
 
-    markdown = to_markdown(clipped)
+    rehosted = rehost_all_images(clipped)
+
+    markdown = to_markdown(rehosted)
     logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
 
     reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
