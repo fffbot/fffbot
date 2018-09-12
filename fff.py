@@ -79,20 +79,30 @@ def to_markdown(html):
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
 
-def upload_to_imgur(url):
-    if imgur_auth_token is None:
-        logger.warning('No Imgur auth, not rehosting ' + url)
-        return url
+def create_imgur_album(title):
+    logger.info('Creating Imgur album with title ' + title)
+    data = {'title': title, 'privacy': 'hidden'}
+    headers = {'Authorization': 'Bearer ' + imgur_auth_token}
 
+    r = requests.post('https://api.imgur.com/3/album', data=data, headers=headers)
+    logger.info('Imgur album response ' + str(r.status_code) + '; body: ' + r.text)
+
+    if r.status_code != 200:
+        raise Exception('Non-OK response from Imgur creating album ' + title)
+
+    return r.json()['data']['id']
+
+
+def upload_to_imgur(album, url):
     logger.info('Uploading image to Imgur: ' + url)
-    data = {'image': url, 'type': 'URL'}
+    data = {'image': url, 'type': 'URL', 'album': album}
     headers = {'Authorization': 'Bearer ' + imgur_auth_token}
 
     r = requests.post('https://api.imgur.com/3/image', data=data, headers=headers)
-    logger.info('Imgur response ' + str(r.status_code) + '; body: ' + r.text)
+    logger.info('Imgur image response ' + str(r.status_code) + '; body: ' + r.text)
 
     if r.status_code != 200:
-        raise Exception('Non-OK response from Imgur')
+        raise Exception('Non-OK response from Imgur uploading ' + url)
 
     return r.json()['data']['link']
 
@@ -107,19 +117,28 @@ def find_images(html):
     return set(filter_factorio_com(urls))
 
 
+def to_dict(urls):
+    r = {}
+    for url in urls:
+        r[url] = url
+    return r
+
+
 def upload_all_to_imgur(urls):
+    if imgur_auth_token is None:
+        logger.warning('No Imgur auth, not rehosting images')
+        return to_dict(urls)
+
     try:
+        album = create_imgur_album('FFF')
+
         r = {}
         for url in urls:
-            imgurl = upload_to_imgur(url)
-            r[url] = imgurl
+            r[url] = upload_to_imgur(album, url)
         return r
     except Exception:
-        logger.exception("Caught exception uploading to imgur, using original images")
-        r = {}
-        for url in urls:
-            r[url] = url
-        return r
+        logger.exception("Caught exception uploading to Imgur, using original images")
+        return to_dict(urls)
 
 
 def replace_images(html, images):
@@ -134,12 +153,8 @@ def rehost_all_images(html):
     return replace_images(html, rehosted)
 
 
-def sleep_and_process(submission):
-    logger.info("Sleeping for " + str(comment_delay) + "s")
-    time.sleep(comment_delay)
-
-    logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
-    html = requests.get(submission.url).text
+def process(url):
+    html = requests.get(url).text
     logger.info("Fetched data (" + str(len(html)) + ") bytes")
 
     clipped = clip(html)
@@ -155,6 +170,15 @@ def sleep_and_process(submission):
     reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
     if len(markdown) > 9980:
         logger.warning("Markdown text was longer than 9980 characters, abbreviated to 9980 characters")
+    return reply
+
+
+def sleep_and_process(submission):
+    logger.info("Sleeping for " + str(comment_delay) + "s")
+    time.sleep(comment_delay)
+
+    logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
+    reply = process(submission.url)
 
     logger.info("Adding comment to " + submission.id + ": " + reply)
     comment = submission.reply(reply)
@@ -163,4 +187,6 @@ def sleep_and_process(submission):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)8s [%(asctime)s] [%(thread)d] %(name)s: %(message)s', level=logging.INFO)
-    main()
+    #main()
+    reply = process('https://www.factorio.com/blog/post/fff-259')
+    print(reply)
