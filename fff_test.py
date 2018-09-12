@@ -260,6 +260,8 @@ We are currently using approximately 40% of the available space, so there is a r
 
         self.assertEqual(expected, replaced)
 
+    def test_extract_fff_number(self):
+        self.assertEqual('259', fff.extract_fff_number('https://www.factorio.com/blog/post/fff-259'))
 
 if __name__ == '__main__':
     unittest.main()

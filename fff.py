@@ -79,9 +79,12 @@ def to_markdown(html):
     return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
 
 
-def create_imgur_album(title):
-    logger.info('Creating Imgur album with title ' + title)
-    data = {'title': title, 'privacy': 'hidden'}
+def create_imgur_album(fff_url):
+    title = 'Factorio Friday Facts #' + extract_fff_number(fff_url)
+    description = fff_url
+
+    logger.info('Creating Imgur album with title: ' + title + '; description: ' + description)
+    data = {'title': title, 'description': description, 'privacy': 'public'}
     headers = {'Authorization': 'Bearer ' + imgur_auth_token}
 
     r = requests.post('https://api.imgur.com/3/album', data=data, headers=headers)
@@ -124,13 +127,13 @@ def to_dict(urls):
     return r
 
 
-def upload_all_to_imgur(urls):
+def upload_all_to_imgur(urls, fff_url):
     if imgur_auth_token is None:
         logger.warning('No Imgur auth, not rehosting images')
         return to_dict(urls)
 
     try:
-        album = create_imgur_album('FFF')
+        album = create_imgur_album(fff_url)
 
         r = {}
         for url in urls:
@@ -147,10 +150,14 @@ def replace_images(html, images):
     return html
 
 
-def rehost_all_images(html):
+def rehost_all_images(html, album_title):
     images = find_images(html)
-    rehosted = upload_all_to_imgur(images)
+    rehosted = upload_all_to_imgur(images, album_title)
     return replace_images(html, rehosted)
+
+
+def extract_fff_number(url):
+    return url.split('fff-')[1][:4]
 
 
 def process(url):
@@ -162,7 +169,7 @@ def process(url):
         logger.error("Unable to clip html data: " + html)
         return
 
-    rehosted = rehost_all_images(clipped)
+    rehosted = rehost_all_images(clipped, url)
 
     markdown = to_markdown(rehosted)
     logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
@@ -187,6 +194,4 @@ def sleep_and_process(submission):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)8s [%(asctime)s] [%(thread)d] %(name)s: %(message)s', level=logging.INFO)
-    #main()
-    reply = process('https://www.factorio.com/blog/post/fff-259')
-    print(reply)
+    main()
