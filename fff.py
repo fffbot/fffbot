@@ -28,7 +28,7 @@ def main():
 
 
 def listen_for_submissions():
-    reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; pyfff; PRAW)')
+    reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; PRAW; https://github.com/fffbot/fffbot)')
     subs = reddit.subreddit(subreddits)
 
     logger.info("Starting to listen for submissions")
