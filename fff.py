@@ -187,9 +187,15 @@ def sleep_and_process(submission):
     logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
     reply = process(submission.url)
 
-    logger.info("Adding comment to " + submission.id + ": " + reply)
-    comment = submission.reply(reply)
-    logger.info('Added comment: ' + comment.id)
+    logger.info("Adding top-level comment to " + submission.id)
+    top_level_comment = submission.reply("👇")
+    logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
+
+    reply_comment = top_level_comment.reply(reply)
+    logger.info("Added reply comment: " + reply_comment.id + "; deleting top-level comment")
+
+    top_level_comment.delete()
+    logger.info("All done")
 
 
 if __name__ == '__main__':
