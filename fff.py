@@ -8,6 +8,7 @@ import os
 import praw
 import requests
 
+import version_info
 
 logger = logging.getLogger(__name__)
 comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
@@ -17,6 +18,7 @@ imgur_auth_token = os.getenv('IMGUR_AUTH')
 
 
 def main():
+    logger.info("Starting fffbot version " + version_info.git_hash + "/" + version_info.build_date)
     while True:
         try:
             listen_for_submissions()
