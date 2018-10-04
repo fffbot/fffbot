@@ -194,9 +194,8 @@ def sleep_and_process(submission):
     logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
 
     reply_comment = top_level_comment.reply(reply)
-    logger.info("Added reply comment: " + reply_comment.id + "; deleting top-level comment")
+    logger.info("Added reply comment: " + reply_comment.id)
 
-    top_level_comment.delete()
     logger.info("All done")
 
 
