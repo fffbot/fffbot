@@ -12,7 +12,7 @@ import version_info
 
 logger = logging.getLogger(__name__)
 comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
-cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5*60))
+cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5 * 60))
 subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
 imgur_auth_token = os.getenv('IMGUR_AUTH')
 
@@ -46,10 +46,11 @@ def listen_for_submissions():
 
 
 def process_submission(submission):
-    logger.info("Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
+    logger.info(
+        "Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
     if 'factorio.com/blog/post/fff' in submission.url:
         logger.info("Submission identified as FFF post, starting thread to sleep and process")
-        thread = threading.Thread(target=sleep_and_process, args=(submission, ))
+        thread = threading.Thread(target=sleep_and_process, args=(submission,))
         thread.daemon = True
         thread.start()
         logger.info("Thread started")
@@ -75,6 +76,10 @@ def clip(html):
     return header_to_div
 
 
+def convert_web_videos_to_img(clipped):
+    return re.sub(r'<video.+?<source\s+?src="(.+?)".*?>.*?</video>', r'<img src="\g<1>"/>', clipped, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+
+
 def to_markdown(html):
     md = html2text.html2text(html, bodywidth=1000)
     images_to_urls = re.sub(r'!\[\]\((.+)\)', r'(\g<1>)', md)
@@ -82,7 +87,7 @@ def to_markdown(html):
 
 
 def create_imgur_album(fff_url):
-    title = 'Factorio Friday Facts #' + extract_fff_number(fff_url)
+    title = '(Test) Factorio Friday Facts #' + extract_fff_number(fff_url)
     description = fff_url
 
     logger.info('Creating Imgur album with title: ' + title + '; description: ' + description)
@@ -152,9 +157,9 @@ def replace_images(html, images):
     return html
 
 
-def rehost_all_images(html, album_title):
+def rehost_all_images(html, url):
     images = find_images(html)
-    rehosted = upload_all_to_imgur(images, album_title)
+    rehosted = upload_all_to_imgur(images, url)
     return replace_images(html, rehosted)
 
 
@@ -171,7 +176,9 @@ def process(url):
         logger.error("Unable to clip html data: " + html)
         return
 
-    rehosted = rehost_all_images(clipped, url)
+    converted_videos = convert_web_videos_to_img(clipped)
+
+    rehosted = rehost_all_images(converted_videos, url)
 
     markdown = to_markdown(rehosted)
     logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
