@@ -1,3 +1,4 @@
+import base64
 import logging
 import re
 import threading
@@ -15,6 +16,8 @@ comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
 cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5 * 60))
 subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
 imgur_auth_token = os.getenv('IMGUR_AUTH')
+github_auth_token = os.getenv('GITHUB_AUTH')
+github_base_url = "https://fffbot.github.io/fff/"
 
 
 def main():
@@ -33,7 +36,7 @@ def listen_for_submissions():
     reddit = praw.Reddit(user_agent='fffbot/2.0 (by /u/fffbot; PRAW; https://github.com/fffbot/fffbot)')
     subs = reddit.subreddit(subreddits)
 
-    logger.info("Starting to listen for submissions")
+    logger.info("Starting to listen for submissions in " + subreddits)
     logger.info("Skipping first 100 submissions")
     i = 1
     # TODO: use skip_existing in PRAW 6
@@ -77,7 +80,8 @@ def clip(html):
 
 
 def convert_web_videos_to_img(clipped):
-    return re.sub(r'<video.+?<source\s+?src="(.+?)\.(webm|mp4)".*?>.*?</video>', r'<img src="\g<1>.mp4"/>', clipped, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    return re.sub(r'<video.+?<source\s+?src="(.+?)\.(webm|mp4)".*?>.*?</video>', r'<img src="\g<1>.webm"/>', clipped,
+                  flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
 
 def to_markdown(html):
@@ -87,7 +91,7 @@ def to_markdown(html):
 
 
 def create_imgur_album(fff_url):
-    title = '(Test) Factorio Friday Facts #' + extract_fff_number(fff_url)
+    title = 'Factorio Friday Facts #' + extract_fff_number(fff_url)
     description = fff_url
 
     logger.info('Creating Imgur album with title: ' + title + '; description: ' + description)
@@ -134,7 +138,64 @@ def to_dict(urls):
     return r
 
 
+def upload_webms_to_github(urls, fff_url):
+    if not urls:
+        return {}
+
+    if github_auth_token is None:
+        logger.warning("No Github auth, not rehosting webms")
+        return to_dict(urls)
+
+    try:
+        fff = extract_fff_number(fff_url)
+
+        r = {}
+        for url in urls:
+            r[url] = github_base_url + upload_to_github(fff, url)
+        return r
+    except Exception:
+        logger.exception("Caught exception uploading to Github, using original webms")
+        return to_dict(urls)
+
+
+def upload_file_to_github(filename, contents, message):
+    logger.info("Uploading file to Github: " + filename)
+    encoded = base64.b64encode(contents).decode('utf-8')
+    data = {
+        'message': message,
+        'committer': {
+            'name': "fffbot",
+            'email': "38205055+fffbot@users.noreply.github.com"
+        },
+        'content': encoded
+    }
+    headers = {'Authorization': 'token ' + github_auth_token}
+
+    r = requests.put('https://api.github.com/repos/fffbot/fff/contents/' + filename, json=data, headers=headers)
+    logger.info("Github contents response " + str(r.status_code) + "; body: " + r.text)
+
+    if r.status_code >= 400:
+        raise Exception("Non-OK response from Github uploading " + filename)
+
+    return r.json()['content']['path']
+
+
+def upload_to_github(fff, url):
+    logger.info("Downloading to memory: " + url)
+    req = requests.get(url)
+    if req.status_code >= 400:
+        raise Exception("Unexpected status downloading " + url + ": " + str(req.status_code) + "; body:" + req.text)
+
+    filename = "images/" + fff + "/" + url[url.rfind("/") + 1:]
+
+    logger.info("Uploading image file to Github: " + filename)
+    return upload_file_to_github(filename, req.content, "Uploading " + filename + "\n\nSource: " + url)
+
+
 def upload_all_to_imgur(urls, fff_url):
+    if not urls:
+        return {}
+
     if imgur_auth_token is None:
         logger.warning('No Imgur auth, not rehosting images')
         return to_dict(urls)
@@ -158,9 +219,15 @@ def replace_images(html, images):
 
 
 def rehost_all_images(html, url):
-    images = find_images(html)
-    rehosted = upload_all_to_imgur(images, url)
-    return replace_images(html, rehosted)
+    all_images = find_images(html)
+
+    webms = [img for img in all_images if img.lower().endswith('.webm')]  # [x for x in mylist if x in goodvals]
+    others = [img for img in all_images if not img.lower().endswith('.webm')]  # [x for x in mylist if x in goodvals]
+
+    github_rehosted = upload_webms_to_github(webms, url)
+    imgur_rehosted = upload_all_to_imgur(others, url)
+
+    return replace_images(html, {**imgur_rehosted, **github_rehosted})
 
 
 def extract_fff_number(url):
