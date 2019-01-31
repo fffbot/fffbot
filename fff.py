@@ -77,7 +77,7 @@ def clip(html):
 
 
 def convert_web_videos_to_img(clipped):
-    return re.sub(r'<video.+?<source\s+?src="(.+?)".*?>.*?</video>', r'<img src="\g<1>"/>', clipped, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    return re.sub(r'<video.+?<source\s+?src="(.+?)\.(webm|mp4)".*?>.*?</video>', r'<img src="\g<1>.mp4"/>', clipped, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
 
 def to_markdown(html):

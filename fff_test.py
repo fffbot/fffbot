@@ -304,7 +304,7 @@ We are currently using approximately 40% of the available space, so there is a r
             </p>
 
             <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
-                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-no-prediction.webm"/>
+                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-no-prediction.mp4"/>
             </p>
 
             <p>
@@ -313,7 +313,7 @@ We are currently using approximately 40% of the available space, so there is a r
             </p>
 
             <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
-                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-prediction.webm"/>
+                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-prediction.mp4"/>
             </p>
 
             <p>
