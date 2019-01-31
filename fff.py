@@ -116,9 +116,10 @@ def upload_to_imgur(album, url):
     logger.info('Imgur image response ' + str(r.status_code) + '; body: ' + r.text)
 
     if r.status_code != 200:
-        raise Exception('Non-OK response from Imgur uploading ' + url)
-
-    return r.json()['data']['link']
+        logger.error('Non-OK response from Imgur uploading ' + url + ', using original')
+        return url
+    else:
+        return r.json()['data']['link']
 
 
 def filter_factorio_com(urls):
@@ -151,7 +152,7 @@ def upload_webms_to_github(urls, fff_url):
 
         r = {}
         for url in urls:
-            r[url] = github_base_url + upload_to_github(fff, url)
+            r[url] = upload_to_github(fff, url)
         return r
     except Exception:
         logger.exception("Caught exception uploading to Github, using original webms")
@@ -189,7 +190,12 @@ def upload_to_github(fff, url):
     filename = "images/" + fff + "/" + url[url.rfind("/") + 1:]
 
     logger.info("Uploading image file to Github: " + filename)
-    return upload_file_to_github(filename, req.content, "Uploading " + filename + "\n\nSource: " + url)
+    try:
+        return github_base_url + upload_file_to_github(filename, req.content,
+                                                       "Uploading " + filename + "\n\nSource: " + url)
+    except Exception:
+        logger.error("Exception uploading " + url + " to Github, using original")
+        return url
 
 
 def upload_all_to_imgur(urls, fff_url):
