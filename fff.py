@@ -1,11 +1,11 @@
 import base64
 import logging
+import os
 import re
 import threading
 import time
 
 import html2text
-import os
 import praw
 import requests
 
@@ -270,7 +270,7 @@ def sleep_and_process(submission):
     reply = process(submission.url)
 
     logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your boss.)")
+    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your mum.)")
     logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
 
     reply_comment = top_level_comment.reply(reply)
