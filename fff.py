@@ -83,6 +83,11 @@ def convert_web_videos_to_img(clipped):
     return re.sub(r'<video.+?<source\s+?src="(.+?)\.(webm|mp4)".*?>.*?</video>', r'<img src="\g<1>.webm"/>', clipped,
                   flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
+def convert_youtube_embed(clipped):
+    # <iframe.+?youtube\.com\/embed\/(\w+).*?<\/iframe>
+    return re.sub(r'<iframe.+?youtube\.com/embed/(\w+).*?</iframe>', r'<a href="https://www.youtube.com/watch?v=\g<1>">https://www.youtube.com/watch?v=\g<1></a>', clipped,
+                  flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+
 
 def to_markdown(html):
     md = html2text.html2text(html, bodywidth=1000)
@@ -250,8 +255,9 @@ def process(url):
         return
 
     converted_videos = convert_web_videos_to_img(clipped)
+    converted_youtube_embed = convert_youtube_embed(converted_videos)
 
-    rehosted = rehost_all_images(converted_videos, url)
+    rehosted = rehost_all_images(converted_youtube_embed, url)
 
     markdown = to_markdown(rehosted)
     logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")

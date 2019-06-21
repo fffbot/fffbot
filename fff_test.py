@@ -2,6 +2,7 @@ import unittest
 
 import fff
 
+
 # https://factorio.com/blog/post/fff-247
 
 
@@ -263,7 +264,7 @@ We are currently using approximately 40% of the available space, so there is a r
     def test_extract_fff_number(self):
         self.assertEqual('259', fff.extract_fff_number('https://www.factorio.com/blog/post/fff-259'))
 
-    def test_asdf(self):
+    def test_convert_images(self):
         result = fff.convert_web_videos_to_img("""
         <p>
                 With the new high resolution Worms (and now also Spitters), their projectiles started to look even more out of place than before. On top of that, a homing acid projectile makes about as much sense as a homing laser beam. We were quite sure we want Worms and Spitters to spit acid, but closer to how the flamethrower 'stream attack' behaves, so we started with that.
@@ -304,7 +305,7 @@ We are currently using approximately 40% of the available space, so there is a r
             </p>
 
             <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
-                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-no-prediction.mp4"/>
+                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-no-prediction.webm"/>
             </p>
 
             <p>
@@ -313,12 +314,68 @@ We are currently using approximately 40% of the available space, so there is a r
             </p>
 
             <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
-                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-prediction.mp4"/>
+                <img src="https://cdn.factorio.com/assets/img/blog/fff-279-prediction.webm"/>
             </p>
 
             <p>
                 When the target too fast and/or the predicted position is out of range, the prediction is turned off. We will probably tweak this so that the prediction tries to go as close to the border of its range as possible. At some point even the homing projectiles from 0.16 miss so this is not much difference, the threshold probably comes a little earlier though.
             </p>
+"""
+        self.assertEqual(expected, result)
+
+
+    def test_youtube_embed(self):
+        result = fff.convert_youtube_embed("""
+        <p>
+        Overall bug fixing is going well. We had a rough release earlier this week related to some GUI logic not working correctly. In the past we've talked about our automated test system (<a href="https://www.factorio.com/blog/post/fff-186">FFF-186</a>) which normally tests game logic. With the rough release earlier this week it pushed me to get the test system in a shape where we can run automatic graphics tests (in hopes of avoiding the issues we had during the 2 broken versions). We still have a few small things to fix but otherwise the automatic test system can now run the full graphics interface while running the tests (in parallel). Just for fun, I set it up so it would arrange the windows in a grid:
+        </p>
+        
+        <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
+        <iframe width="896" height="560" src="https://www.youtube.com/embed/LXnyTZBmfXM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </p>
+        
+        <h3>New remnants for almost everything <font size=2>Dom, Albert</font></h3>
+        <p>
+        Since forever, when killing an entity we used generic remnants (with a few exceptions, walls, rails...). We only cared about the size of the entity and it is done.
+        </p>
+
+        <p>
+        Just wow.
+        </p>
+        
+        <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
+        <iframe width="896" height="504" src="https://www.youtube.com/embed/7lVAFcDX4eM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </p>
+        
+        <p>
+        As always, let us know what you think on our <a href="https://forums.factorio.com/70004">forum</a>.
+        </p>
+""")
+        expected = """
+        <p>
+        Overall bug fixing is going well. We had a rough release earlier this week related to some GUI logic not working correctly. In the past we've talked about our automated test system (<a href="https://www.factorio.com/blog/post/fff-186">FFF-186</a>) which normally tests game logic. With the rough release earlier this week it pushed me to get the test system in a shape where we can run automatic graphics tests (in hopes of avoiding the issues we had during the 2 broken versions). We still have a few small things to fix but otherwise the automatic test system can now run the full graphics interface while running the tests (in parallel). Just for fun, I set it up so it would arrange the windows in a grid:
+        </p>
+        
+        <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
+        <a href="https://www.youtube.com/watch?v=LXnyTZBmfXM">https://www.youtube.com/watch?v=LXnyTZBmfXM</a>
+        </p>
+        
+        <h3>New remnants for almost everything <font size=2>Dom, Albert</font></h3>
+        <p>
+        Since forever, when killing an entity we used generic remnants (with a few exceptions, walls, rails...). We only cared about the size of the entity and it is done.
+        </p>
+
+        <p>
+        Just wow.
+        </p>
+        
+        <p style="text-align: center; margin:auto; margin-top:20px; margin-bottom: 20px;">
+        <a href="https://www.youtube.com/watch?v=7lVAFcDX4eM">https://www.youtube.com/watch?v=7lVAFcDX4eM</a>
+        </p>
+        
+        <p>
+        As always, let us know what you think on our <a href="https://forums.factorio.com/70004">forum</a>.
+        </p>
 """
         self.assertEqual(expected, result)
 
