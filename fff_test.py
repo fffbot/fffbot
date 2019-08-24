@@ -379,5 +379,12 @@ We are currently using approximately 40% of the available space, so there is a r
 """
         self.assertEqual(expected, result)
 
+
+    def test_slice_replies(self):
+        replies = fff.slice_replies("Hello, world!", 3)
+        expected = ["Hel\n»", "«\nlo,\n»", "«\n wo\n»", "«\nrld\n»", "«\n!"]
+        self.assertEqual(expected, replies)
+
+
 if __name__ == '__main__':
     unittest.main()

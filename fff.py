@@ -18,6 +18,7 @@ subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
 imgur_auth_token = os.getenv('IMGUR_AUTH')
 github_auth_token = os.getenv('GITHUB_AUTH')
 github_base_url = "https://fffbot.github.io/fff/"
+max_comment_length = int(os.getenv("MAX_COMMENT_LENGTH", 9900))
 
 
 def main():
@@ -245,6 +246,20 @@ def extract_fff_number(url):
     return url.split('fff-')[1][:4]
 
 
+def slice_replies(markdown, maxlen):
+    replies = []
+    remaining = markdown
+    while len(remaining) > 0:
+        reply = remaining[:maxlen]
+        remaining = remaining[maxlen:]
+        if len(replies) != 0:
+            reply = "«\n" + reply
+        if len(remaining) > 0:
+            reply = reply + "\n»"
+        replies.append(reply)
+    return replies
+
+
 def process(url):
     html = requests.get(url).text
     logger.info("Fetched data (" + str(len(html)) + ") bytes")
@@ -262,10 +277,7 @@ def process(url):
     markdown = to_markdown(rehosted)
     logger.info("Data clipped and converted to " + str(len(markdown)) + " total bytes")
 
-    reply = markdown if len(markdown) <= 9980 else markdown[:9980] + ' _(...)_'
-    if len(markdown) > 9980:
-        logger.warning("Markdown text was longer than 9980 characters, abbreviated to 9980 characters")
-    return reply
+    return slice_replies(markdown, max_comment_length)
 
 
 def sleep_and_process(submission):
@@ -273,17 +285,24 @@ def sleep_and_process(submission):
     time.sleep(comment_delay)
 
     logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
-    reply = process(submission.url)
+    replies = process(submission.url)
 
-    if reply is None:
-        logger.error("Empty reply returned")
-    else:
-        logger.info("Adding top-level comment to " + submission.id)
-        top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your master... yet.)")
-        logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
+    reply_count = len(replies)
+    logger.info(str(reply_count) + " replies returned")
 
-        reply_comment = top_level_comment.reply(reply)
-        logger.info("Added reply comment: " + reply_comment.id)
+    if replies is None or reply_count == 0:
+        logger.error("No replies returned, not posting anything")
+        return
+
+    logger.info("Adding top-level comment to " + submission.id)
+    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your master... yet.)")
+    logger.info("Added top-level comment: " + top_level_comment.id + ", going to add " + str(reply_count) + " replies")
+
+    previous_reply = top_level_comment
+    for reply in replies:
+        logger.info("Posting reply using parent " + previous_reply.id + ": " + reply)
+        previous_reply = previous_reply.reply(reply)
+        logger.info("Added reply: " + previous_reply.id)
 
     logger.info("All done")
 
