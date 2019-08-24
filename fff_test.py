@@ -382,7 +382,7 @@ We are currently using approximately 40% of the available space, so there is a r
 
     def test_slice_replies(self):
         replies = fff.slice_replies("Hello, world!", 3)
-        expected = ["Hel\n»", "«\nlo,\n»", "«\n wo\n»", "«\nrld\n»", "«\n!"]
+        expected = ["Hel\n\n»", "«\n\nlo,\n\n»", "«\n\n wo\n\n»", "«\n\nrld\n\n»", "«\n\n!"]
         self.assertEqual(expected, replies)
 
 

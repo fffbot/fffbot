@@ -23,6 +23,8 @@ max_comment_length = int(os.getenv("MAX_COMMENT_LENGTH", 9900))
 
 def main():
     logger.info("Starting fffbot version " + version_info.git_hash + "/" + version_info.build_date)
+    logger.info("Comment delay: " + str(comment_delay) + "s; cooldown time: " + str(cooldown_time) + "s; subreddits: "
+                + subreddits + "; max comment length: " + str(max_comment_length))
     while True:
         try:
             listen_for_submissions()
@@ -84,9 +86,11 @@ def convert_web_videos_to_img(clipped):
     return re.sub(r'<video.+?<source\s+?src="(.+?)\.(webm|mp4)".*?>.*?</video>', r'<img src="\g<1>.webm"/>', clipped,
                   flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
+
 def convert_youtube_embed(clipped):
     # <iframe.+?youtube\.com\/embed\/(\w+).*?<\/iframe>
-    return re.sub(r'<iframe.+?youtube\.com/embed/(\w+).*?</iframe>', r'<a href="https://www.youtube.com/watch?v=\g<1>">https://www.youtube.com/watch?v=\g<1></a>', clipped,
+    return re.sub(r'<iframe.+?youtube\.com/embed/(\w+).*?</iframe>',
+                  r'<a href="https://www.youtube.com/watch?v=\g<1>">https://www.youtube.com/watch?v=\g<1></a>', clipped,
                   flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
 
 
@@ -130,7 +134,8 @@ def upload_to_imgur(album, url):
 
 def filter_factorio_com(urls):
     for url in urls:
-        if "factorio.com" in url: yield url
+        if "factorio.com" in url:
+            yield url
 
 
 def find_images(html):
@@ -253,9 +258,9 @@ def slice_replies(markdown, maxlen):
         reply = remaining[:maxlen]
         remaining = remaining[maxlen:]
         if len(replies) != 0:
-            reply = "«\n" + reply
+            reply = "«\n\n" + reply
         if len(remaining) > 0:
-            reply = reply + "\n»"
+            reply = reply + "\n\n»"
         replies.append(reply)
     return replies
 
