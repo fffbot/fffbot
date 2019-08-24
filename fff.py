@@ -275,12 +275,15 @@ def sleep_and_process(submission):
     logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
     reply = process(submission.url)
 
-    logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your master... yet.)")
-    logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
+    if reply is None:
+        logger.error("Empty reply returned")
+    else:
+        logger.info("Adding top-level comment to " + submission.id)
+        top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your master... yet.)")
+        logger.info("Added top-level comment: " + top_level_comment.id + ", adding reply: " + reply)
 
-    reply_comment = top_level_comment.reply(reply)
-    logger.info("Added reply comment: " + reply_comment.id)
+        reply_comment = top_level_comment.reply(reply)
+        logger.info("Added reply comment: " + reply_comment.id)
 
     logger.info("All done")
 
