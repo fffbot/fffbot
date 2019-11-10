@@ -300,7 +300,7 @@ def sleep_and_process(submission):
         return
 
     logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, I'm not your master... yet.)")
+    top_level_comment = submission.reply("(Expand to view FFF contents. Or don't, you're not my slave... yet.)")
     logger.info("Added top-level comment: " + top_level_comment.id + ", going to add " + str(reply_count) + " replies")
 
     previous_reply = top_level_comment
