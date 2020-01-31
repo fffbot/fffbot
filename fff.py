@@ -40,15 +40,8 @@ def listen_for_submissions():
     subs = reddit.subreddit(subreddits)
 
     logger.info("Starting to listen for submissions in " + subreddits)
-    logger.info("Skipping first 100 submissions")
-    i = 1
-    # TODO: use skip_existing in PRAW 6
-    for submission in subs.stream.submissions():
-        if i > 100:
-            process_submission(submission)
-        else:
-            logger.info("Skipping submission #" + str(i) + ": " + submission.id + " (" + submission.title + ")")
-            i = i + 1
+    for submission in subs.stream.submissions(skip_existing=True):
+        process_submission(submission)
 
 
 def process_submission(submission):
