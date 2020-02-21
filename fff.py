@@ -81,7 +81,6 @@ def convert_web_videos_to_img(clipped):
 
 
 def convert_youtube_embed(clipped):
-    # <iframe.+?youtube\.com\/embed\/(\w+).*?<\/iframe>
     return re.sub(r'<iframe.+?youtube\.com/embed/(\w+).*?</iframe>',
                   r'<a href="https://www.youtube.com/watch?v=\g<1>">https://www.youtube.com/watch?v=\g<1></a>', clipped,
                   flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
@@ -143,12 +142,12 @@ def to_dict(urls):
     return r
 
 
-def upload_webms_to_github(urls, fff_url):
+def upload_all_to_github(urls, fff_url):
     if not urls:
         return {}
 
     if github_auth_token is None:
-        logger.warning("No Github auth, not rehosting webms")
+        logger.warning("No Github auth, not rehosting videos")
         return to_dict(urls)
 
     try:
@@ -159,7 +158,7 @@ def upload_webms_to_github(urls, fff_url):
             r[url] = upload_to_github(fff, url)
         return r
     except Exception:
-        logger.exception("Caught exception uploading to Github, using original webms")
+        logger.exception("Caught exception uploading to Github, using original videos")
         return to_dict(urls)
 
 
@@ -231,13 +230,15 @@ def replace_images(html, images):
 def rehost_all_images(html, url):
     all_images = find_images(html)
 
-    webms = [img for img in all_images if img.lower().endswith('.webm')]  # [x for x in mylist if x in goodvals]
-    others = [img for img in all_images if not img.lower().endswith('.webm')]  # [x for x in mylist if x in goodvals]
+    webms = [img for img in all_images if img.lower().endswith('.webm')]
+    mp4s = [img for img in all_images if img.lower().endswith('.mp4')]
+    others = [img for img in all_images if not img.lower().endswith('.webm') and not img.lower().endswith('.mp4')]
 
-    github_rehosted = upload_webms_to_github(webms, url)
+    webms_rehosted = upload_all_to_github(webms, url)
+    mp4s_rehosted = upload_all_to_github(mp4s, url)
     imgur_rehosted = upload_all_to_imgur(others, url)
 
-    return replace_images(html, {**imgur_rehosted, **github_rehosted})
+    return replace_images(html, {**imgur_rehosted, **webms_rehosted, **mp4s_rehosted})
 
 
 def extract_fff_number(url):
