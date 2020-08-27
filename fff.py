@@ -44,11 +44,15 @@ def listen_for_submissions():
         process_submission(submission)
 
 
+def is_altf4(url):
+    return 'alt-f4.blog' in url
+
+
 def process_submission(submission):
     logger.info(
         "Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
-    if 'factorio.com/blog/post/fff' in submission.url:
-        logger.info("Submission identified as FFF post, starting thread to sleep and process")
+    if 'factorio.com/blog/post/fff' in submission.url or is_altf4(submission.url):
+        logger.info("Submission identified as FFF/ALT-F4 post (URL: " + submission.url + "), starting thread to sleep and process")
         thread = threading.Thread(target=sleep_and_process, args=(submission,))
         thread.daemon = True
         thread.start()
@@ -93,7 +97,8 @@ def to_markdown(html):
 
 
 def create_imgur_album(fff_url):
-    title = 'Factorio Friday Facts #' + extract_fff_number(fff_url)
+    nr = extract_fff_number(fff_url)
+    title = 'ALT-F4 #' + nr if is_altf4(fff_url) else 'Factorio Friday Facts #' + extract_fff_number(fff_url)
     description = fff_url
 
     logger.info('Creating Imgur album with title: ' + title + '; description: ' + description)
@@ -124,15 +129,15 @@ def upload_to_imgur(album, url):
         return r.json()['data']['link']
 
 
-def filter_factorio_com(urls):
+def filter_relevant_image_urls(urls):
     for url in urls:
-        if "factorio.com" in url:
+        if 'factorio.com' in url or 'alt-f4.blog' in url:
             yield url
 
 
 def find_images(html):
     urls = re.findall(r'<img.+?src="(.+?)".+?>', html, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
-    return set(filter_factorio_com(urls))
+    return set(filter_relevant_image_urls(urls))
 
 
 def to_dict(urls):
@@ -151,11 +156,12 @@ def upload_all_to_github(urls, fff_url):
         return to_dict(urls)
 
     try:
-        fff = extract_fff_number(fff_url)
+        nr = extract_fff_number(fff_url)
+        name = 'altf4-' + nr if is_altf4(fff_url) else extract_fff_number(fff_url)
 
         r = {}
         for url in urls:
-            r[url] = upload_to_github(fff, url)
+            r[url] = upload_to_github(name, url)
         return r
     except Exception:
         logger.exception("Caught exception uploading to Github, using original videos")
@@ -184,13 +190,13 @@ def upload_file_to_github(filename, contents, message):
     return r.json()['content']['path']
 
 
-def upload_to_github(fff, url):
+def upload_to_github(name, url):
     logger.info("Downloading to memory: " + url)
     req = requests.get(url)
     if req.status_code >= 400:
         raise Exception("Unexpected status downloading " + url + ": " + str(req.status_code) + "; body:" + req.text)
 
-    filename = "images/" + fff + "/" + url[url.rfind("/") + 1:]
+    filename = "images/" + name + "/" + url[url.rfind("/") + 1:]
 
     logger.info("Uploading image file to Github: " + filename)
     try:
@@ -242,7 +248,10 @@ def rehost_all_images(html, url):
 
 
 def extract_fff_number(url):
-    return url.split('fff-')[1][:4]
+    if 'alt-f4' in url:
+        return url.split('ALTF4-')[1][:6]
+    else:
+        return url.split('fff-')[1][:4]
 
 
 def slice_replies(markdown, maxlen):
@@ -294,7 +303,7 @@ def sleep_and_process(submission):
         return
 
     logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view FFF contents, if you would like.)")
+    top_level_comment = submission.reply("(Expand to view contents, if you would like.)")
     logger.info("Added top-level comment: " + top_level_comment.id + ", going to add " + str(reply_count) + " replies")
 
     previous_reply = top_level_comment
