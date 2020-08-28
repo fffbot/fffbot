@@ -131,7 +131,7 @@ def upload_to_imgur(album, url):
 
 def filter_relevant_image_urls(urls):
     for url in urls:
-        if 'factorio.com' in url or 'alt-f4.blog' in url:
+        if 'factorio.com' in url or 'alt-f4.blog' in url or not url.startswith('http'):
             yield url
 
 
@@ -140,32 +140,25 @@ def find_images(html):
     return set(filter_relevant_image_urls(urls))
 
 
-def to_dict(urls):
-    r = {}
-    for url in urls:
-        r[url] = url
-    return r
-
-
 def upload_all_to_github(urls, fff_url):
     if not urls:
         return {}
 
     if github_auth_token is None:
         logger.warning("No Github auth, not rehosting videos")
-        return to_dict(urls)
+        return urls
 
     try:
         nr = extract_fff_number(fff_url)
         name = 'altf4-' + nr if is_altf4(fff_url) else extract_fff_number(fff_url)
 
         r = {}
-        for url in urls:
-            r[url] = upload_to_github(name, url)
+        for k, v in urls.items():
+            r[k] = upload_to_github(name, v)
         return r
     except Exception:
         logger.exception("Caught exception uploading to Github, using original videos")
-        return to_dict(urls)
+        return urls
 
 
 def upload_file_to_github(filename, contents, message):
@@ -213,18 +206,18 @@ def upload_all_to_imgur(urls, fff_url):
 
     if imgur_auth_token is None:
         logger.warning('No Imgur auth, not rehosting images')
-        return to_dict(urls)
+        return urls
 
     try:
         album = create_imgur_album(fff_url)
 
         r = {}
-        for url in urls:
-            r[url] = upload_to_imgur(album, url)
+        for k, v in urls.items():
+            r[k] = upload_to_imgur(album, v)
         return r
     except Exception:
         logger.exception("Caught exception uploading to Imgur, using original images")
-        return to_dict(urls)
+        return urls
 
 
 def replace_images(html, images):
@@ -234,17 +227,30 @@ def replace_images(html, images):
 
 
 def rehost_all_images(html, url):
-    all_images = find_images(html)
+    images = find_images(html)
+    baseurl = extract_base_url(url)
 
-    webms = [img for img in all_images if img.lower().endswith('.webm')]
-    mp4s = [img for img in all_images if img.lower().endswith('.mp4')]
-    others = [img for img in all_images if not img.lower().endswith('.webm') and not img.lower().endswith('.mp4')]
+    videos = {}
+    others = {}
+    for imgurl in images:
+        resolved = imgurl
+        if not imgurl.startswith('http'): # relative URL
+            resolved = baseurl + imgurl if imgurl.startswith('/') else baseurl + '/' + imgurl
 
-    webms_rehosted = upload_all_to_github(webms, url)
-    mp4s_rehosted = upload_all_to_github(mp4s, url)
+        ext = imgurl.lower()
+        if ext.endswith('.webm') or ext.endswith('.mp4'):
+            videos[imgurl] = resolved
+        else:
+            others[imgurl] = resolved
+
     imgur_rehosted = upload_all_to_imgur(others, url)
+    videos_rehosted = upload_all_to_github(videos, url)
 
-    return replace_images(html, {**imgur_rehosted, **webms_rehosted, **mp4s_rehosted})
+    return replace_images(html, {**imgur_rehosted, **videos_rehosted})
+
+
+def extract_base_url(url):
+    return 'https://alt-f4.blog' # for now assume only ALT+F4 uses relative image URLs...
 
 
 def extract_fff_number(url):
