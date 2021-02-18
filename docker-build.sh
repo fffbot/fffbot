@@ -1,7 +1,7 @@
 #!/bin/bash
 
-GIT_HASH=`git rev-parse --verify HEAD`
-BUILD_DATE=`date --iso-8601=seconds`
+GIT_HASH=$(git rev-parse --verify HEAD)
+BUILD_DATE=$(date --iso-8601=seconds)
 
 
 SHORT_HASH=$(git rev-parse --short HEAD)
@@ -22,7 +22,7 @@ TAG_NAME=${SHORT_HASH}${SUFFIX}
 
 
 docker build \
-    --build-arg git_hash=${GIT_HASH} \
-    --build-arg build_date=${BUILD_DATE} \
+    --build-arg git_hash="${GIT_HASH}" \
+    --build-arg build_date="${BUILD_DATE}" \
     --no-cache \
-    -t fffbot:${TAG_NAME} .
+    -t fffbot:"${TAG_NAME}" .
