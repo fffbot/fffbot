@@ -275,7 +275,9 @@ def slice_replies(markdown, maxlen):
 
 
 def process(url):
-    html = requests.get(url).text
+    r = requests.get(url)
+    r.encoding = 'UTF-8'  # https://github.com/fffbot/fffbot/issues/2
+    html = r.text
     logger.info("Fetched data (" + str(len(html)) + ") bytes")
 
     clipped = clip(html)
