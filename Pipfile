@@ -7,8 +7,8 @@ verify_ssl = true
 python_version = "3.8"
 
 [packages]
-requests = "*"
-praw = "*"
-"html2text" = "*"
+requests = "==2.*"
+praw = "==7.*"
+"html2text" = "==2020.*"
 
 [dev-packages]
