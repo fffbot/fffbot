@@ -383,6 +383,23 @@ We are currently using approximately 40% of the available space, so there is a r
         expected = ["Hel\n\n»", "«\n\nlo,\n\n»", "«\n\n wo\n\n»", "«\n\nrld\n\n»", "«\n\n!"]
         self.assertEqual(expected, replies)
 
+    def test_slice_replies_1(self):
+        """slice_replies makes one reply if markdown fits in one reply"""
+        replies = fff.slice_replies("aaa\n\nbbb", 50)
+        expected = ["aaa\n\nbbb"]
+        self.assertEqual(expected, replies)
+
+    def test_slice_replies_2(self):
+        """slice_replies splits on paragraph boundry"""
+        replies = fff.slice_replies("aaa\n\nbbb", 6)
+        expected = ["aaa\n\n\n\n»", "«\n\nbbb"]
+        self.assertEqual(expected, replies)
+
+    def test_slice_replies_3(self):
+        """slice_replies splits on maxlen"""
+        replies = fff.slice_replies("aaabbb", 3)
+        expected = ["aaa\n\n»", "«\n\nbbb"]
+        self.assertEqual(expected, replies)
 
 if __name__ == '__main__':
     unittest.main()

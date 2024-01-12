@@ -4,6 +4,7 @@ import os
 import re
 import threading
 import time
+import re
 
 import html2text
 import praw
@@ -261,16 +262,37 @@ def extract_fff_number(url):
 
 
 def slice_replies(markdown, maxlen):
-    replies = []
-    remaining = markdown
-    while len(remaining) > 0:
-        reply = remaining[:maxlen]
-        remaining = remaining[maxlen:]
-        if len(replies) != 0:
-            reply = "«\n\n" + reply
-        if len(remaining) > 0:
-            reply = reply + "\n\n»"
-        replies.append(reply)
+    """
+    slices markdown on logical boundries.
+    logical boundries in order of precedence:
+    - end of string
+    - end of paragraph
+    - fallback on a maxlen
+
+    if len(markdown) == 0 returns empty list
+    """
+    # end of string so slice_replies("x\n\nx", 9000) is one reply
+    # end of paragraph so slice_replies("xxx\n\nxxx", 6) splits ["xxx\n\n", "xxx"] rather then ["xxx\n\nx", "xx"]
+    # fallback so slice_replies("xxxxxx", 3) splits ["xxx", "xxx"]
+    pattern = re.compile(
+        r"""
+            # [\w\W] = any character(including newline)
+            # {1,maxlen} = at least one character and up to maxlen characters
+            # \Z = end of string
+            # \n\n = end of paragraph
+            # | = logical or
+            [\w\W]{1,maxlen}\Z
+            | [\w\W]{1,maxlen}\n\n
+            | [\w\W]{1,maxlen}
+        """.replace("maxlen", str(int(maxlen))),
+        re.MULTILINE | re.VERBOSE
+    )
+    replies = pattern.findall(markdown)
+    # add continue characters to replies
+    for i, reply in enumerate(replies):
+        prefix = "«\n\n" if i > 0 else ""
+        postfix = "\n\n»" if i < len(replies)-1 else ""
+        replies[i] = prefix + reply + postfix
     return replies
 
 
