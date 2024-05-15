@@ -9,6 +9,6 @@ python_version = "3.10"
 [packages]
 requests = "==2.*"
 praw = "==7.*"
-"html2text" = "==2020.*"
+"html2text" = "==2024.*"
 
 [dev-packages]
