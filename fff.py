@@ -67,13 +67,6 @@ def clip(html):
 
     html = html[h2_index:]
 
-    div_index = html.find('<div')
-    if div_index != -1:
-        html = html[div_index:]
-        div_index = html.find('<div', 1)
-        if div_index != -1:
-            html = html[div_index:]
-
     footer_index = html.find('"footer"')
     if footer_index == -1:
         logger.error('No "footer" found in text: ' + html)
