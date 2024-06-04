@@ -285,7 +285,7 @@ def process(url):
         logger.error("Unable to clip html data: " + html)
         return
 
-    clipped = clipped.replace("<author>", "&nbsp;<author>")
+    clipped = clipped.replace("<author>", "&nbsp;-&nbsp;<author>")
     converted_videos = convert_web_videos_to_img(clipped)
     converted_youtube_embed = convert_youtube_embed(converted_videos)
 
@@ -312,7 +312,7 @@ def sleep_and_process(submission):
         return
 
     logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view contents, if you would like.)")
+    top_level_comment = submission.reply("(Expand to view contents, if you would like.)\n\n\nI am thinking about decommissioning fffbot because interest and value do not seem high. Please let me know by commenting if you regularly benefit from fffbot comments and would like it to stay up.")
     logger.info("Added top-level comment: " + top_level_comment.id + ", going to add " + str(reply_count) + " replies")
 
     previous_reply = top_level_comment
