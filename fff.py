@@ -65,18 +65,26 @@ def clip(html):
         logger.error("No <h2 found in text: " + html)
         return
 
-    footer_index = html.find('"footer"', h2_index)
+    html = html[h2_index:]
+
+    div_index = html.find('<div')
+    if div_index != -1:
+        html = html[div_index:]
+        div_index = html.find('<div', 1)
+        if div_index != -1:
+            html = html[div_index:]
+
+    footer_index = html.find('"footer"')
     if footer_index == -1:
         logger.error('No "footer" found in text: ' + html)
         return
 
-    div_index = html.rfind('<div', 0, footer_index)
-    if div_index == -1:
-        logger.error('<div not found in text: ' + html)
+    end_index = html.rfind('</p', 0, footer_index)
+    if end_index == -1:
+        logger.error('<p not found in text: ' + html)
         return
 
-    header_to_div = html[h2_index:div_index]
-    return header_to_div
+    return html[:end_index]
 
 
 def convert_web_videos_to_img(clipped):
@@ -92,8 +100,10 @@ def convert_youtube_embed(clipped):
 
 def to_markdown(html):
     md = html2text.html2text(html, bodywidth=1000)
-    images_to_urls = re.sub(r'!\[\]\((.+)\)', r'(\g<1>)', md)
-    return images_to_urls.replace(r'(/blog/)', r'(https://www.factorio.com/blog/)').strip()
+    md = re.sub(r'!\[\]\((.+)\)', r'(\g<1>)', md)
+    md = re.sub(r'!\[(.+)\]\((.+)\)', r'(\g<1>: \g<2>)', md)
+    md = md.replace(r'(/blog/', r'(https://www.factorio.com/blog/')
+    return md.strip()
 
 
 def create_imgur_album(fff_url):
