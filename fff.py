@@ -285,6 +285,7 @@ def process(url):
         logger.error("Unable to clip html data: " + html)
         return
 
+    clipped = clipped.replace("<author>", "&nbsp;<author>")
     converted_videos = convert_web_videos_to_img(clipped)
     converted_youtube_embed = convert_youtube_embed(converted_videos)
 
