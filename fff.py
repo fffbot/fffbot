@@ -67,6 +67,12 @@ def clip(html):
 
     html = html[h2_index:]
 
+    div_index = html.find('<div class="panel-inset-lighter')
+    if div_index != -1:
+        html = html[div_index:]
+    else:
+        logger.warning('no <div class="panel-inset-lighter found in text')
+
     footer_index = html.find('"footer"')
     if footer_index == -1:
         logger.error('No "footer" found in text: ' + html)
@@ -93,8 +99,8 @@ def convert_youtube_embed(clipped):
 
 def to_markdown(html):
     md = html2text.html2text(html, bodywidth=1000)
-    md = re.sub(r'!\[\]\((.+)\)', r'(\g<1>)', md)
-    md = re.sub(r'!\[(.+)\]\((.+)\)', r'(\g<1>: \g<2>)', md)
+    md = re.sub(r'!\[\]\((.+?)\)', r'(\g<1>)', md)
+    md = re.sub(r'!\[(.+?)\]\((.+?)\)', r'(\g<1>: \g<2>)', md)
     md = md.replace(r'(/blog/', r'(https://www.factorio.com/blog/')
     return md.strip()
 
