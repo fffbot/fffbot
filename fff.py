@@ -14,11 +14,11 @@ import version_info
 logger = logging.getLogger(__name__)
 comment_delay = int(os.getenv('COMMENT_DELAY_SECONDS', 120))
 cooldown_time = int(os.getenv('COOL_DOWN_SECONDS', 5 * 60))
-subreddits = os.getenv('SUBREDDITS', 'bottesting+factorio')
+subreddits = os.getenv('SUBREDDITS', 'test')
 imgur_auth_token = os.getenv('IMGUR_AUTH')
 github_auth_token = os.getenv('GITHUB_AUTH')
 github_base_url = "https://fffbot.github.io/fff/"
-max_comment_length = int(os.getenv("MAX_COMMENT_LENGTH", 9900))
+max_comment_length = int(os.getenv("MAX_COMMENT_LENGTH", 9700))
 
 
 def main():
@@ -41,19 +41,19 @@ def listen_for_submissions():
 
     logger.info("Starting to listen for submissions in " + subreddits)
     for submission in subs.stream.submissions(skip_existing=True):
-        process_submission(submission)
+        process_submission(reddit, submission)
 
 
 def is_altf4(url):
     return 'alt-f4.blog' in url
 
 
-def process_submission(submission):
+def process_submission(reddit, submission):
     logger.info(
         "Encountered submission; id: " + submission.id + "; title: " + submission.title + "; url: " + submission.url)
     if 'factorio.com/blog/post/fff' in submission.url or is_altf4(submission.url):
         logger.info("Submission identified as FFF/ALT-F4 post (URL: " + submission.url + "), starting thread to sleep and process")
-        thread = threading.Thread(target=sleep_and_process, args=(submission,))
+        thread = threading.Thread(target=sleep_and_process, args=(reddit, submission,))
         thread.daemon = True
         thread.start()
         logger.info("Thread started")
@@ -306,11 +306,11 @@ def process(url):
     return slice_replies(markdown, max_comment_length)
 
 
-def sleep_and_process(submission):
+def sleep_and_process(reddit, submission):
     logger.info("Sleeping for " + str(comment_delay) + "s")
     time.sleep(comment_delay)
 
-    logger.info("Done sleeping, processing " + submission.id + "; Fetching url: " + submission.url)
+    logger.info("Done sleeping, processing " + submission.id + " (\"" + submission.title + "\"); Fetching url: " + submission.url)
     replies = process(submission.url)
 
     reply_count = len(replies)
@@ -320,15 +320,34 @@ def sleep_and_process(submission):
         logger.error("No replies returned, not posting anything")
         return
 
-    logger.info("Adding top-level comment to " + submission.id)
-    top_level_comment = submission.reply("(Expand to view contents, if you would like.)\n\n\nI am thinking about decommissioning fffbot because interest and value do not seem high. Please let me know by commenting if you regularly benefit from fffbot comments and would like it to stay up.")
-    logger.info("Added top-level comment: " + top_level_comment.id + ", going to add " + str(reply_count) + " replies")
+    first = replies[0]
+    rest = replies[1:]
 
-    previous_reply = top_level_comment
-    for reply in replies:
+    u_fffbot = reddit.subreddit("u_fffbot")
+
+    first = "**NOTE:** fffbot is a community-driven effort and is not associated with Wube Software. " + \
+        "For any questions or remarks, please post a comment or send a private message to u/fffbot." + \
+        "\n\n* * *\n\n" + first
+
+    logger.info("Posting to u/fffbot: " + first)
+    post = u_fffbot.submit(
+        title = submission.title,
+        selftext = first
+    )
+    logger.info("Posted id: " + post.id)
+    previous_reply = post
+    for reply in rest:
         logger.info("Posting reply using parent " + previous_reply.id + ": " + reply)
         previous_reply = previous_reply.reply(reply)
         logger.info("Added reply: " + previous_reply.id)
+
+    logger.info("Adding top-level comment to " + submission.id)
+    top_level_comment = submission.reply(
+        "You may find the post contents here, in case the Factorio website is blocked for you: u/fffbot/comments/" + post.id + "\n\n\n" + \
+            "**NOTE:** fffbot is a community-driven effort and is not associated with Wube Software. " + \
+        "For any questions or remarks, please reply to this comment or send a private message to u/fffbot."
+    )
+    logger.info("Added top-level comment: " + top_level_comment.id)
 
     logger.info("All done")
 
