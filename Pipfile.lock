@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3da209a3dbd6a93b79d9d1dc97e97106fc1ce2b979670b0d2d502add1cb293c6"
+            "sha256": "d7d872a1d37dfa1e2a7c721949b34c85c89014bcc9528a11aada50dc93f11e21"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.10"
+            "python_version": "3.12"
         },
         "sources": [
             {
@@ -125,6 +125,7 @@
                 "sha256:05f8e367d15aaabc96415376776cdd11afd5127a77fce6e36afc60c563ca2c32"
             ],
             "index": "pypi",
+            "markers": "python_version >= '3.8'",
             "version": "==2024.2.26"
         },
         "idna": {
@@ -141,6 +142,7 @@
                 "sha256:f1d7eef414cafe28080dda12ed09253a095a69933d5c8132eca11d4dc8a070bf"
             ],
             "index": "pypi",
+            "markers": "python_version ~= '3.7'",
             "version": "==7.7.1"
         },
         "prawcore": {
@@ -157,6 +159,7 @@
                 "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6"
             ],
             "index": "pypi",
+            "markers": "python_version >= '3.8'",
             "version": "==2.32.3"
         },
         "update-checker": {
@@ -168,11 +171,11 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d",
-                "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"
+                "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472",
+                "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==2.2.1"
+            "version": "==2.2.2"
         },
         "websocket-client": {
             "hashes": [
