@@ -343,7 +343,7 @@ def sleep_and_process(reddit, submission):
 
     logger.info("Adding top-level comment to " + submission.id)
     top_level_comment = submission.reply(
-        "You may find the post contents here, in case the Factorio website is blocked for you: u/fffbot/comments/" + post.id + "\n\n\n" + \
+        "You may find the post contents here, in case the Factorio website is blocked for you: https://www.reddit.com/u/fffbot/comments/" + post.id + "\n\n\n" + \
             "**NOTE:** fffbot is a community-driven effort and is not associated with Wube Software. " + \
         "For any questions or remarks, please reply to this comment or send a private message to u/fffbot."
     )
