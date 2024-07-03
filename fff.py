@@ -350,7 +350,7 @@ def sleep_and_process(reddit, submission):
     logger.info("Added top-level comment: " + top_level_comment.id)
 
     logger.info("Approving post " + post.id)
-    logger.info("Approved: " + str(post.mod().approve()))
+    logger.info("Approved: " + str(post.mod.approve()))
 
     logger.info("All done")
 
